@@ -76,6 +76,16 @@ Stop-Process -Id <PID> -Force
 
 # Estimated time to sync (based on current rate)
 .\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet getblockchaininfo | Select-String "verificationprogress"
+
+# Monitor sync progress in real-time (updates every 30 seconds)
+while ($true) {
+    $info = .\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet getblockchaininfo | ConvertFrom-Json
+    $behind = $info.headers - $info.blocks
+    $progress = [math]::Round($info.verificationprogress * 100, 4)
+    $ibd = if ($info.initialblockdownload) { "SYNCING" } else { "SYNCED" }
+    Write-Host "$(Get-Date -Format 'HH:mm:ss') | Status: $ibd | Blocks: $($info.blocks)/$($info.headers) | Behind: $behind | Progress: $progress%"
+    Start-Sleep -Seconds 30
+}
 ```
 
 ### Mempool Status
