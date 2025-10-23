@@ -429,6 +429,145 @@ btc-sync
 
 ---
 
+## 💰 Wallet Management
+
+### Wallet Operations
+
+```powershell
+# List all loaded wallets
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet listwallets
+
+# List all available wallets in wallet directory
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet listwalletdir
+
+# Load a wallet
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet loadwallet "wallet-name"
+
+# Unload a wallet
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet unloadwallet "wallet-name"
+
+# Create a new wallet
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet createwallet "wallet-name"
+
+# Create a new encrypted wallet
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -named createwallet wallet_name="wallet-name" passphrase="your-passphrase"
+
+# Get wallet info
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getwalletinfo
+```
+
+### Address Management
+
+```powershell
+# Get a new receiving address
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getnewaddress
+
+# Get a new address with a label
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getnewaddress "label-name"
+
+# List all addresses (shows all addresses that have received funds)
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listreceivedbyaddress 0 true
+
+# Get all addresses by label
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getaddressesbylabel ""
+
+# List all address labels
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listlabels
+
+# Get address information
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getaddressinfo "your-address"
+```
+
+### Wallet Security
+
+```powershell
+# Encrypt wallet (node will restart!)
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" encryptwallet "your-passphrase"
+
+# Unlock wallet for 120 seconds
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" walletpassphrase "your-passphrase" 120
+
+# Change wallet passphrase
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" walletpassphrasechange "old-passphrase" "new-passphrase"
+
+# Lock wallet immediately
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" walletlock
+```
+
+### Balance & Transactions
+
+```powershell
+# Get wallet balance
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getbalance
+
+# Get unconfirmed balance
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getunconfirmedbalance
+
+# List all transactions (last 10)
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listtransactions "*" 10
+
+# List all transactions (last 100)
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listtransactions "*" 100
+
+# Get transaction details
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" gettransaction "txid"
+
+# List unspent transaction outputs (UTXOs)
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listunspent
+
+# List received transactions by address
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listreceivedbyaddress
+```
+
+### Monitoring Incoming Transactions
+
+```powershell
+# Watch for incoming transactions in real-time
+while ($true) {
+    $wallet = .\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getwalletinfo | ConvertFrom-Json
+    $mempool = .\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet getmempoolinfo | ConvertFrom-Json
+    Write-Host "$(Get-Date -Format 'HH:mm:ss') | Balance: $($wallet.balance) BTC | Unconfirmed: $($wallet.unconfirmed_balance) BTC | Mempool: $($mempool.size) txs"
+    Start-Sleep -Seconds 10
+}
+
+# Check specific address for incoming transactions
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listreceivedbyaddress 0 true | Select-String "your-address" -Context 5,5
+
+# View recent wallet transactions
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" listtransactions "*" 5
+```
+
+### Sending Bitcoin
+
+```powershell
+# Send Bitcoin to an address
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" sendtoaddress "recipient-address" 0.001
+
+# Send with custom fee rate (sat/vB)
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" sendtoaddress "recipient-address" 0.001 "" "" false true null "unset" null 20
+
+# Send all funds from wallet
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" sendtoaddress "recipient-address" $(.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" getbalance) "" "" true
+```
+
+### Backup & Export
+
+```powershell
+# Backup wallet
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" backupwallet "D:\bitcoin-wallet-backups\backup-$(Get-Date -Format 'yyyy-MM-dd-HHmmss').dat"
+
+# Export private key for specific address
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" dumpprivkey "your-address"
+
+# Export all wallet private keys
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet -rpcwallet="wallet-name" dumpwallet "D:\wallet-export.txt"
+
+# Restore wallet from backup
+.\build\bin\Release\bitcoin-cli.exe -datadir=D:\bitcoin-mainnet restorewallet "restored-wallet-name" "D:\bitcoin-wallet-backups\backup-file.dat"
+```
+
+---
+
 ## 🎯 Quick Reference Card
 
 | Task | Command |
